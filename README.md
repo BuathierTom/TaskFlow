@@ -16,12 +16,11 @@ Ce projet est une application **To-Do List**, elle va permettre de gérer effica
 
 ## 🧰 Technologies utilisées
 
-- **Next.js**
+- **Vite**
 - **React**
 - **TypeScript**
 - **Tailwind CSS**
 - **shadcn/ui**
-- **Vite**
 
 ## ⚙️ Installation & démarrage du projet
 
