@@ -30,7 +30,7 @@ Ce projet est une application **To-Do List**, elle va permettre de gérer effica
 git clone <URL_DU_DEPOT_GIT>
 
 # 2. Accéder au dossier du projet
-cd <NOM_DU_PROJET>
+cd taskflow
 
 # 3. Installer les dépendances
 npm install
