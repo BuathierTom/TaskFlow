@@ -1,20 +1,15 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Trash2, Clock, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 
 import TaskForm from '@/components/TaskForm';
-import TaskItem from '@/components/TaskItem';
-import FilterBar from '@/components/FilterBar';
-import StatsCard from '@/components/StatsCard';
-
 import { useTasks } from '@/hooks/use-tasks';
 import { Task, FilterType } from '@/types/Task';
 
 import Layout from '@/layouts/Layout';
 import Header from '@/layouts/Header';
+import StatsSection from '@/components/StatsSection';
+import SearchAndFilterBar from '@/components/SearchAndFilterBar';
+import TaskList from '@/components/TaskList';
 
 const Index = () => {
   const { tasks, setTasks } = useTasks();
@@ -77,7 +72,6 @@ const Index = () => {
   const filteredTasks = useMemo(() => {
     let filtered = tasks;
 
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(task =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -85,7 +79,6 @@ const Index = () => {
       );
     }
 
-    // Apply status filter
     switch (filter) {
       case 'active':
         filtered = filtered.filter(task => task.status !== 'completed');
@@ -114,108 +107,28 @@ const Index = () => {
     <Layout>
       <Header onAddTask={() => setShowForm(true)} />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatsCard
-          title="Total"
-          value={stats.total}
-          icon={<Circle className="h-5 w-5" />}
-          color="blue"
-        />
-        <StatsCard
-          title="En cours"
-          value={stats.inProgress}
-          icon={<Clock className="h-5 w-5" />}
-          color="orange"
-        />
-        <StatsCard
-          title="Terminées"
-          value={stats.completed}
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          color="green"
-        />
-        <StatsCard
-          title="En retard"
-          value={stats.overdue}
-          icon={<AlertCircle className="h-5 w-5" />}
-          color="red"
-        />
-      </div>
+      <StatsSection stats={stats} />
 
-      {/* Search and Filter Bar */}
-      <Card className="mb-6 shadow-sm border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Rechercher des tâches..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
-              />
-            </div>
+      <SearchAndFilterBar
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        filter={filter}
+        onFilterChange={setFilter}
+        completedCount={stats.completed}
+        onClearCompleted={clearCompleted}
+      />
 
-            <FilterBar filter={filter} onFilterChange={setFilter} />
+      <TaskList
+        tasks={filteredTasks}
+        onUpdate={updateTask}
+        onDelete={deleteTask}
+        onEdit={setEditingTask}
+        isOverdue={isOverdue}
+        showForm={() => setShowForm(true)}
+        searchQuery={searchQuery}
+        filter={filter}
+      />
 
-            {stats.completed > 0 && (
-              <Button
-                variant="outline"
-                onClick={clearCompleted}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Supprimer terminées
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tasks List */}
-      <div className="space-y-4">
-        {filteredTasks.length === 0 ? (
-          <Card className="border-0 shadow-sm bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="text-gray-400 mb-4">
-                <Circle className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
-                {searchQuery || filter !== 'all' ? 'Aucune tâche trouvée' : 'Aucune tâche'}
-              </h3>
-              <p className="text-gray-500 dark:text-gray-500 text-sm text-center">
-                {searchQuery || filter !== 'all'
-                  ? 'Essayez de modifier vos critères de recherche ou de filtrage.'
-                  : 'Commencez par créer votre première tâche !'}
-              </p>
-              {!searchQuery && filter === 'all' && (
-                <Button
-                  onClick={() => setShowForm(true)}
-                  className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Créer une tâche
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          filteredTasks.map((task, index) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onUpdate={updateTask}
-              onDelete={deleteTask}
-              onEdit={setEditingTask}
-              isOverdue={isOverdue(task)}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Task Form Modal */}
       {(showForm || editingTask) && (
         <TaskForm
           task={editingTask}
