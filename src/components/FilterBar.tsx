@@ -1,7 +1,7 @@
 import React from 'react';
 import { List, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FilterType } from '@/pages/Index';
+import { FilterType } from '@/types/Task';
 
 interface FilterBarProps {
   filter: FilterType;
@@ -34,22 +34,26 @@ const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange }) => {
 
   return (
     <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-      {filters.map((filterOption) => (
-        <Button
-          key={filterOption.key}
-          variant={filter === filterOption.key ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => onFilterChange(filterOption.key)}
-          className={`transition-all duration-200 flex items-center gap-2 ${
-            filter === filterOption.key
-              ? 'bg-white dark:bg-gray-600 shadow-sm'
-              : 'hover:bg-white/50 dark:hover:bg-gray-600/50'
-          }`}
-        >
-          {filterOption.icon}
-          <span className="hidden sm:inline">{filterOption.label}</span>
-        </Button>
-      ))}
+      {filters.map((filterOption) => {
+        const isActive = filter === filterOption.key;
+        return (
+          <Button
+            key={filterOption.key}
+            variant="ghost"
+            size="sm"
+            onClick={() => onFilterChange(filterOption.key)}
+            className={[
+              "transition-all duration-200 flex items-center gap-2",
+              isActive
+                ? "bg-black text-white dark:bg-gray-900 dark:text-white"
+                : "bg-transparent text-gray-900 dark:text-gray-200 hover:bg-black hover:text-white dark:hover:bg-gray-900 dark:hover:text-white"
+            ].join(' ')}
+          >
+            {filterOption.icon}
+            <span className="hidden sm:inline">{filterOption.label}</span>
+          </Button>
+        );
+      })}
     </div>
   );
 };
