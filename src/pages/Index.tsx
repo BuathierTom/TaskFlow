@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { toast } from '@/hooks/use-toast';
-
+import { useAuth, useUser } from '@clerk/clerk-react';
 import TaskForm from '@/components/TaskForm';
 import { useTasks } from '@/hooks/use-tasks';
 import { Task, FilterType } from '@/types/Task';
@@ -10,21 +10,26 @@ import Header from '@/layouts/Header';
 import StatsSection from '@/components/StatsSection';
 import SearchAndFilterBar from '@/components/SearchAndFilterBar';
 import TaskList from '@/components/TaskList';
+import { Card, CardContent } from '@/components/ui/card';
+import { Circle } from 'lucide-react';
+import AuthHeader from '@/components/AuthHeader';
 
 const Index = () => {
-  const { tasks, setTasks } = useTasks();
-
+  const { isSignedIn, userId } = useAuth();
+  const { user } = useUser();
+  const { tasks, setTasks } = useTasks({ isSignedIn, userId });
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
     const newTask: Task = {
       ...taskData,
       id: crypto.randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      userId: userId || undefined,
     };
     setTasks(prev => [newTask, ...prev]);
     setShowForm(false);
@@ -105,7 +110,34 @@ const Index = () => {
 
   return (
     <Layout>
-      <Header onAddTask={() => setShowForm(true)} />
+      <Header
+        isSignedIn={isSignedIn}
+        user={user}
+        onAddTask={() => setShowForm(true)}
+      />
+
+      {!isSignedIn && (
+        <Card className="mb-6 shadow-sm border-0 bg-blue-50/80 dark:bg-blue-900/20 backdrop-blur-sm border-blue-200 dark:border-blue-800">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="text-blue-600 dark:text-blue-400">
+                <Circle className="h-12 w-12 mx-auto mb-2 opacity-60" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  Connectez-vous pour synchroniser vos tâches
+                </h3>
+                <p className="text-blue-600 dark:text-blue-400 text-sm mb-4">
+                  Créez un compte pour sauvegarder vos tâches et y accéder depuis n'importe quel appareil.
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <AuthHeader />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <StatsSection stats={stats} />
 
