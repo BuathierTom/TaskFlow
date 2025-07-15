@@ -6,5 +6,6 @@ export interface Task {
   dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
+  userId?: string;
 }
 export type FilterType = 'all' | 'active' | 'completed' | 'overdue';
