@@ -1,68 +1,27 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Search, Trash2, Clock, CheckCircle2, Circle, AlertCircle, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+
 import TaskForm from '@/components/TaskForm';
 import TaskItem from '@/components/TaskItem';
 import FilterBar from '@/components/FilterBar';
 import StatsCard from '@/components/StatsCard';
 
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'todo' | 'in-progress' | 'completed';
-  dueDate?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type FilterType = 'all' | 'active' | 'completed' | 'overdue';
+import { useTasks } from '@/hooks/use-tasks';
+import { useTheme } from '@/hooks/use-theme';
+import { Task, FilterType } from '@/types/Task';
 
 const Index = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { tasks, setTasks } = useTasks();
+  const { darkMode, toggleTheme } = useTheme();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Initialize theme
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const isDark = savedTheme ? savedTheme === 'dark' : prefersDark;
-    setDarkMode(isDark);
-    document.documentElement.classList.toggle('dark', isDark);
-  }, []);
-
-  // Load tasks from localStorage
-  useEffect(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-      const parsedTasks = JSON.parse(savedTasks).map((task: any) => ({
-        ...task,
-        createdAt: new Date(task.createdAt),
-        updatedAt: new Date(task.updatedAt),
-        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-      }));
-      setTasks(parsedTasks);
-    }
-  }, []);
-
-  // Save tasks to localStorage
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  const toggleTheme = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', newDarkMode);
-  };
 
   const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newTask: Task = {
@@ -80,8 +39,8 @@ const Index = () => {
   };
 
   const updateTask = (id: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id 
+    setTasks(prev => prev.map(task =>
+      task.id === id
         ? { ...task, ...updates, updatedAt: new Date() }
         : task
     ));
@@ -146,7 +105,7 @@ const Index = () => {
     const completed = tasks.filter(task => task.status === 'completed').length;
     const inProgress = tasks.filter(task => task.status === 'in-progress').length;
     const overdue = tasks.filter(task => isOverdue(task)).length;
-    
+
     return { total, completed, inProgress, overdue };
   }, [tasks]);
 
@@ -163,7 +122,7 @@ const Index = () => {
               Organisez vos tâches avec style et efficacité
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -173,7 +132,7 @@ const Index = () => {
             >
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-            
+
             <Button
               onClick={() => setShowForm(true)}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 hover:scale-105 shadow-lg"
@@ -225,9 +184,9 @@ const Index = () => {
                   className="pl-10 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                 />
               </div>
-              
+
               <FilterBar filter={filter} onFilterChange={setFilter} />
-              
+
               {stats.completed > 0 && (
                 <Button
                   variant="outline"
@@ -254,7 +213,7 @@ const Index = () => {
                   {searchQuery || filter !== 'all' ? 'Aucune tâche trouvée' : 'Aucune tâche'}
                 </h3>
                 <p className="text-gray-500 dark:text-gray-500 text-sm text-center">
-                  {searchQuery || filter !== 'all' 
+                  {searchQuery || filter !== 'all'
                     ? 'Essayez de modifier vos critères de recherche ou de filtrage.'
                     : 'Commencez par créer votre première tâche !'}
                 </p>
