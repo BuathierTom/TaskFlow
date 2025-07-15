@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const PUBLISHABLE_KEY = "pk_test_am9pbnQtcmF5LTIyLmNsZXJrLmFjY291bnRzLmRldiQ"
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Clerk Publishable Key")
