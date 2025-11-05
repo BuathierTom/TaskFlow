@@ -1,11 +1,23 @@
-
-import React from 'react';
-import { Calendar, Clock, Edit, Trash2, CheckCircle2, Circle, PlayCircle, AlertCircle } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Calendar,
+  Clock,
+  Edit,
+  Trash2,
+  CheckCircle2,
+  Circle,
+  PlayCircle,
+  PauseCircle,
+  AlertCircle,
+  Tag,
+  Briefcase,
+  Timer,
+  Flame,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Task } from '@/pages/Index';
+import { Task, TaskPriority } from '@/types/Task';
 import { cn } from '@/lib/utils';
 
 interface TaskItemProps {
@@ -13,65 +25,104 @@ interface TaskItemProps {
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
+  onStartTimer: (id: string) => void;
+  onPauseTimer: (id: string) => void;
   isOverdue: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
+
+const priorityStyles: Record<TaskPriority, string> = {
+  high: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+};
+
+const statusConfigMap = {
+  completed: {
+    icon: <CheckCircle2 className="h-4 w-4" />,
+    label: 'Terminée',
+    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  },
+  'in-progress': {
+    icon: <PlayCircle className="h-4 w-4" />,
+    label: 'En cours',
+    color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+  },
+  todo: {
+    icon: <Circle className="h-4 w-4" />,
+    label: 'À faire',
+    color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  },
+};
+
+const formatTrackedTime = (seconds: number) => {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hrs > 0) {
+    return `${hrs}h ${mins.toString().padStart(2, '0')}m`;
+  }
+  if (mins > 0) {
+    return `${mins}m ${secs.toString().padStart(2, '0')}s`;
+  }
+  return `${secs}s`;
+};
 
 const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onUpdate,
   onDelete,
   onEdit,
+  onStartTimer,
+  onPauseTimer,
   isOverdue,
   className,
   style,
 }) => {
-  const getStatusConfig = (status: Task['status']) => {
-    switch (status) {
-      case 'completed':
-        return {
-          icon: <CheckCircle2 className="h-4 w-4" />,
-          label: 'Terminée',
-          color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-          borderColor: 'border-green-200 dark:border-green-800',
-        };
-      case 'in-progress':
-        return {
-          icon: <PlayCircle className="h-4 w-4" />,
-          label: 'En cours',
-          color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-          borderColor: 'border-orange-200 dark:border-orange-800',
-        };
-      default:
-        return {
-          icon: <Circle className="h-4 w-4" />,
-          label: 'À faire',
-          color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-          borderColor: 'border-gray-200 dark:border-gray-700',
-        };
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!task.activeTimer) {
+      return undefined;
     }
-  };
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [task.activeTimer]);
 
-  const statusConfig = getStatusConfig(task.status);
+  const totalTrackedSeconds = useMemo(() => {
+    const base = task.trackedSeconds;
+    if (task.activeTimer) {
+      const startedAt = new Date(task.activeTimer.startedAt).getTime();
+      const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
+      return base + elapsed;
+    }
+    return base;
+  }, [task.trackedSeconds, task.activeTimer, now]);
+
+  const statusConfig = statusConfigMap[task.status];
   const isCompleted = task.status === 'completed';
+  const isTimerRunning = Boolean(task.activeTimer);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('fr-FR', {
+  const formatDate = (date: Date) =>
+    new Intl.DateTimeFormat('fr-FR', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     }).format(date);
-  };
 
   const getDaysUntilDue = (dueDate: Date) => {
     const today = new Date();
     const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const toggleStatus = () => {
+  const handleStatusToggle = () => {
     let newStatus: Task['status'];
     switch (task.status) {
       case 'todo':
@@ -81,17 +132,28 @@ const TaskItem: React.FC<TaskItemProps> = ({
         newStatus = 'completed';
         break;
       case 'completed':
+      default:
         newStatus = 'todo';
         break;
     }
     onUpdate(task.id, { status: newStatus });
   };
 
+  const scheduledInfo = useMemo(() => {
+    if (!task.scheduledAt) {
+      return undefined;
+    }
+
+    const start = task.scheduledAt;
+    const end = new Date(start.getTime() + (task.durationMinutes ?? 30) * 60 * 1000);
+    return { start, end };
+  }, [task.scheduledAt, task.durationMinutes]);
+
   return (
     <Card
       className={cn(
-        'group transition-all duration-200 hover:shadow-md border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm',
-        isOverdue && !isCompleted && 'ring-2 ring-red-200 dark:ring-red-800 bg-red-50/50 dark:bg-red-900/10',
+        'group transition-all duration-200 hover:shadow-md border border-gray-200/50 dark:border-gray-700/40 bg-white/60 dark:bg-gray-900/50 backdrop-blur',
+        isOverdue && !isCompleted && 'ring-2 ring-red-200 dark:ring-red-700 bg-red-50/40 dark:bg-red-900/20',
         isCompleted && 'opacity-75',
         className
       )}
@@ -99,53 +161,62 @@ const TaskItem: React.FC<TaskItemProps> = ({
     >
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          {/* Status Toggle */}
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggleStatus}
-            className={cn(
-              'mt-1 hover:scale-110 transition-all duration-200',
-              statusConfig.color
-            )}
+            onClick={handleStatusToggle}
+            className={cn('mt-1 hover:scale-110 transition-all duration-200', statusConfig.color)}
+            aria-label="Changer le statut"
           >
             {statusConfig.icon}
           </Button>
 
-          {/* Task Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1">
-                <h3
-                  className={cn(
-                    'font-medium text-gray-900 dark:text-gray-100 transition-all duration-200',
-                    isCompleted && 'line-through text-gray-500 dark:text-gray-500'
-                  )}
-                >
-                  {task.title}
-                </h3>
-                
-                {task.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                    {task.description}
-                  </p>
-                )}
-
-                {/* Tags and Due Date */}
-                <div className="flex flex-wrap items-center gap-2 mt-3">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <h3
+                    className={cn(
+                      'font-semibold text-lg text-gray-900 dark:text-gray-100',
+                      isCompleted && 'line-through text-gray-500 dark:text-gray-500'
+                    )}
+                  >
+                    {task.title}
+                  </h3>
+                  <Badge variant="secondary" className={priorityStyles[task.priority]}>
+                    <Timer className="h-3 w-3 mr-1" />
+                    {task.priority === 'high' ? 'Haute' : task.priority === 'medium' ? 'Moyenne' : 'Faible'}
+                  </Badge>
                   <Badge variant="secondary" className={statusConfig.color}>
                     {statusConfig.icon}
                     <span className="ml-1">{statusConfig.label}</span>
                   </Badge>
+                </div>
 
+                {task.description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{task.description}</p>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                  {task.project && (
+                    <span className="flex items-center gap-1">
+                      <Briefcase className="h-3 w-3" />
+                      {task.project}
+                    </span>
+                  )}
+                  {task.tags.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
+                      {task.tags.map((tag) => `#${tag}`).join(', ')}
+                    </span>
+                  )}
                   {task.dueDate && (
-                    <Badge
-                      variant="outline"
+                    <span
                       className={cn(
-                        'flex items-center gap-1',
+                        'flex items-center gap-1 px-2 py-1 rounded-full border',
                         isOverdue && !isCompleted
-                          ? 'border-red-300 text-red-700 bg-red-50 dark:border-red-700 dark:text-red-400 dark:bg-red-900/20'
-                          : 'border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:bg-blue-900/20'
+                          ? 'border-red-300 text-red-600 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-900/20'
+                          : 'border-blue-300 text-blue-600 bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:bg-blue-900/20'
                       )}
                     >
                       {isOverdue && !isCompleted ? (
@@ -153,27 +224,31 @@ const TaskItem: React.FC<TaskItemProps> = ({
                       ) : (
                         <Calendar className="h-3 w-3" />
                       )}
-                      <span className="text-xs">
-                        {formatDate(task.dueDate)}
-                        {task.dueDate && !isCompleted && (
-                          <span className="ml-1">
-                            ({getDaysUntilDue(task.dueDate) === 0
-                              ? "Aujourd'hui"
-                              : getDaysUntilDue(task.dueDate) === 1
-                              ? "Demain"
-                              : getDaysUntilDue(task.dueDate) > 0
-                              ? `dans ${getDaysUntilDue(task.dueDate)}j`
-                              : `${Math.abs(getDaysUntilDue(task.dueDate))}j de retard`}
-                            )
-                          </span>
-                        )}
-                      </span>
-                    </Badge>
+                      {formatDate(task.dueDate)}
+                      {!isCompleted && (
+                        <span className="ml-1">
+                          (
+                          {(() => {
+                            const diff = getDaysUntilDue(task.dueDate);
+                            if (diff === 0) return "Aujourd'hui";
+                            if (diff === 1) return 'Demain';
+                            if (diff > 0) return `dans ${diff}j`;
+                            return `${Math.abs(diff)}j de retard`;
+                          })()}
+                          )
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {scheduledInfo && (
+                    <span className="flex items-center gap-1 px-2 py-1 rounded-full border border-purple-300 text-purple-600 bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:bg-purple-900/20">
+                      <Clock className="h-3 w-3" />
+                      {formatDate(scheduledInfo.start)} · {task.durationMinutes ?? 30} min
+                    </span>
                   )}
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <Button
                   variant="ghost"
@@ -191,6 +266,39 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant={isTimerRunning ? 'destructive' : 'outline'}
+                  size="sm"
+                  onClick={() => (isTimerRunning ? onPauseTimer(task.id) : onStartTimer(task.id))}
+                  className="flex items-center gap-2"
+                >
+                  {isTimerRunning ? (
+                    <>
+                      <PauseCircle className="h-4 w-4" />
+                      Pause
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle className="h-4 w-4" />
+                      Start
+                    </>
+                  )}
+                </Button>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatTrackedTime(totalTrackedSeconds)}
+                </Badge>
+                {task.pomodoroSessions > 0 && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Flame className="h-3 w-3 text-orange-500" />
+                    {task.pomodoroSessions} pomodoro(s)
+                  </Badge>
+                )}
               </div>
             </div>
           </div>

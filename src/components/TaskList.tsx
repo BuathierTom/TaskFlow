@@ -9,6 +9,8 @@ interface TaskListProps {
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
+  onStartTimer: (id: string) => void;
+  onPauseTimer: (id: string) => void;
   isOverdue: (task: Task) => boolean;
   showForm: () => void;
   searchQuery: string;
@@ -20,6 +22,8 @@ export default function TaskList({
   onUpdate,
   onDelete,
   onEdit,
+  onStartTimer,
+  onPauseTimer,
   isOverdue,
   showForm,
   searchQuery,
@@ -63,6 +67,8 @@ export default function TaskList({
           onUpdate={onUpdate}
           onDelete={onDelete}
           onEdit={onEdit}
+          onStartTimer={onStartTimer}
+          onPauseTimer={onPauseTimer}
           isOverdue={isOverdue(task)}
           className="animate-fade-in"
           style={{ animationDelay: `${index * 50}ms` }}

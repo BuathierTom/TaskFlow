@@ -1,7 +1,8 @@
-import { Sun, Moon, Plus } from 'lucide-react';
+import { Sun, Moon, Plus, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AuthHeader from '@/components/AuthHeader';
 import { useTheme } from '@/hooks/use-theme';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   isSignedIn: boolean;
@@ -25,6 +26,16 @@ const Header: React.FC<HeaderProps> = ({ isSignedIn, user, onAddTask }) => {
         </p>
       </div>
       <div className="flex items-center gap-3">
+        <Link to="/analytics">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 transition-all duration-200 hover:scale-105"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Statistiques
+          </Button>
+        </Link>
         <Button
           variant="outline"
           size="icon"

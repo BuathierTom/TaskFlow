@@ -2,73 +2,46 @@ import { useState, useMemo } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import TaskForm from '@/components/TaskForm';
-import { useTasks } from '@/hooks/use-tasks';
 import { Task, FilterType } from '@/types/Task';
+import { useTasksContext } from '@/context/TasksContext';
 
 import Layout from '@/layouts/Layout';
 import Header from '@/layouts/Header';
 import StatsSection from '@/components/StatsSection';
 import SearchAndFilterBar from '@/components/SearchAndFilterBar';
 import TaskList from '@/components/TaskList';
+import KanbanBoard from '@/components/kanban/KanbanBoard';
+import CalendarView from '@/components/calendar/CalendarView';
+import FocusView from '@/components/focus/FocusView';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Circle } from 'lucide-react';
 import AuthHeader from '@/components/AuthHeader';
 
 const Index = () => {
-  const { isSignedIn, userId } = useAuth();
+  const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const { tasks, setTasks } = useTasks({ isSignedIn, userId });
+  const {
+    tasks,
+    addTask,
+    updateTask,
+    deleteTask,
+    clearCompleted,
+    startTimer,
+    pauseTimer,
+    scheduleBlock,
+    unscheduleBlock,
+    completePomodoro,
+  } = useTasksContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
-    const newTask: Task = {
-      ...taskData,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: userId || undefined,
-    };
-    setTasks(prev => [newTask, ...prev]);
-    setShowForm(false);
-    toast({
-      title: "Tâche créée",
-      description: "Votre nouvelle tâche a été ajoutée avec succès.",
-    });
-  };
-
-  const updateTask = (id: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(task =>
-      task.id === id
-        ? { ...task, ...updates, updatedAt: new Date() }
-        : task
-    ));
-    setEditingTask(null);
-    toast({
-      title: "Tâche mise à jour",
-      description: "Les modifications ont été sauvegardées.",
-    });
-  };
-
-  const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-    toast({
-      title: "Tâche supprimée",
-      description: "La tâche a été supprimée définitivement.",
-      variant: "destructive",
-    });
-  };
-
-  const clearCompleted = () => {
-    const completedCount = tasks.filter(task => task.status === 'completed').length;
-    setTasks(prev => prev.filter(task => task.status !== 'completed'));
-    toast({
-      title: "Tâches terminées supprimées",
-      description: `${completedCount} tâche(s) supprimée(s).`,
-    });
-  };
+  const [activeView, setActiveView] = useState<'list' | 'kanban' | 'calendar' | 'focus'>('list');
+  const completedCount = useMemo(
+    () => tasks.filter((task) => task.status === 'completed').length,
+    [tasks]
+  );
 
   const isOverdue = (task: Task) => {
     return task.dueDate && task.status !== 'completed' && new Date() > task.dueDate;
@@ -108,6 +81,46 @@ const Index = () => {
     return { total, completed, inProgress, overdue };
   }, [tasks]);
 
+  const handleStartTimer = (id: string) => {
+    startTimer(id);
+    toast({
+      title: "Chrono démarré",
+      description: "Le suivi du temps est en cours pour cette tâche.",
+    });
+  };
+
+  const handlePauseTimer = (id: string) => {
+    pauseTimer(id);
+    toast({
+      title: "Chrono mis en pause",
+      description: "Le suivi du temps est suspendu.",
+    });
+  };
+
+  const handleScheduleBlock = (id: string, scheduledAt: Date, duration: 30 | 60) => {
+    scheduleBlock(id, scheduledAt, duration);
+    toast({
+      title: "Bloc planifié",
+      description: "Le créneau de focus a été ajouté à votre calendrier.",
+    });
+  };
+
+  const handleUnscheduleBlock = (id: string) => {
+    unscheduleBlock(id);
+    toast({
+      title: "Bloc retiré",
+      description: "La tâche n'est plus planifiée dans le calendrier.",
+    });
+  };
+
+  const handleCompletePomodoro = (id: string, durationSeconds: number) => {
+    completePomodoro(id, durationSeconds);
+    toast({
+      title: "Session terminée",
+      description: "Pomodoro ajouté à votre historique de focus.",
+    });
+  };
+
   return (
     <Layout>
       <Header
@@ -141,30 +154,139 @@ const Index = () => {
 
       <StatsSection stats={stats} />
 
-      <SearchAndFilterBar
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-        filter={filter}
-        onFilterChange={setFilter}
-        completedCount={stats.completed}
-        onClearCompleted={clearCompleted}
-      />
+      <Tabs
+        value={activeView}
+        onValueChange={(value) => setActiveView(value as typeof activeView)}
+        className="space-y-6"
+      >
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-gray-900/60 p-1 rounded-xl">
+          <TabsTrigger value="list">Liste</TabsTrigger>
+          <TabsTrigger value="kanban">Kanban</TabsTrigger>
+          <TabsTrigger value="calendar">Calendrier</TabsTrigger>
+          <TabsTrigger value="focus">Focus</TabsTrigger>
+        </TabsList>
 
-      <TaskList
-        tasks={filteredTasks}
-        onUpdate={updateTask}
-        onDelete={deleteTask}
-        onEdit={setEditingTask}
-        isOverdue={isOverdue}
-        showForm={() => setShowForm(true)}
-        searchQuery={searchQuery}
-        filter={filter}
-      />
+        <TabsContent value="list" className="space-y-6 focus-visible:outline-none">
+          <SearchAndFilterBar
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            filter={filter}
+            onFilterChange={setFilter}
+            completedCount={stats.completed}
+            onClearCompleted={() => {
+              clearCompleted();
+              toast({
+                title: "Tâches terminées supprimées",
+                description: `${completedCount} tâche(s) supprimée(s).`,
+              });
+            }}
+          />
+
+          <TaskList
+            tasks={filteredTasks}
+            onUpdate={(id, updates) => {
+              updateTask(id, updates);
+              toast({
+                title: "Tâche mise à jour",
+                description: "Les modifications ont été sauvegardées.",
+              });
+            }}
+            onDelete={(id) => {
+              deleteTask(id);
+              toast({
+                title: "Tâche supprimée",
+                description: "La tâche a été supprimée définitivement.",
+                variant: "destructive",
+              });
+            }}
+            onEdit={(task) => setEditingTask(task)}
+            onStartTimer={handleStartTimer}
+            onPauseTimer={handlePauseTimer}
+            isOverdue={isOverdue}
+            showForm={() => setShowForm(true)}
+            searchQuery={searchQuery}
+            filter={filter}
+          />
+        </TabsContent>
+
+        <TabsContent value="kanban" className="space-y-6 focus-visible:outline-none">
+          <SearchAndFilterBar
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            filter={filter}
+            onFilterChange={setFilter}
+            completedCount={stats.completed}
+            onClearCompleted={() => {
+              clearCompleted();
+              toast({
+                title: "Tâches terminées supprimées",
+                description: `${completedCount} tâche(s) supprimée(s).`,
+              });
+            }}
+          />
+
+          <KanbanBoard
+            tasks={filteredTasks}
+            onUpdate={(id, updates) => {
+              updateTask(id, updates);
+              toast({
+                title: "Tâche mise à jour",
+                description: "Les modifications ont été sauvegardées.",
+              });
+            }}
+            onDelete={(id) => {
+              deleteTask(id);
+              toast({
+                title: "Tâche supprimée",
+                description: "La tâche a été supprimée définitivement.",
+                variant: "destructive",
+              });
+            }}
+            onEdit={(task) => setEditingTask(task)}
+            onStartTimer={handleStartTimer}
+            onPauseTimer={handlePauseTimer}
+          />
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-6 focus-visible:outline-none">
+          <CalendarView
+            tasks={tasks}
+            onSchedule={handleScheduleBlock}
+            onUnschedule={handleUnscheduleBlock}
+            onEdit={(task) => setEditingTask(task)}
+          />
+        </TabsContent>
+
+        <TabsContent value="focus" className="space-y-6 focus-visible:outline-none">
+          <FocusView
+            tasks={tasks}
+            onStartTimer={handleStartTimer}
+            onPauseTimer={handlePauseTimer}
+            onCompletePomodoro={handleCompletePomodoro}
+          />
+        </TabsContent>
+      </Tabs>
 
       {(showForm || editingTask) && (
         <TaskForm
           task={editingTask}
-          onSubmit={editingTask ? (data) => updateTask(editingTask.id, data) : addTask}
+          onSubmit={(data) => {
+            if (editingTask) {
+              updateTask(editingTask.id, data);
+              toast({
+                title: "Tâche mise à jour",
+                description: "Les modifications ont été sauvegardées.",
+              });
+            } else {
+              addTask(data);
+              toast({
+                title: "Tâche créée",
+                description: "Votre nouvelle tâche a été ajoutée avec succès.",
+              });
+            }
+            setShowForm(false);
+            setEditingTask(null);
+          }}
           onCancel={() => {
             setShowForm(false);
             setEditingTask(null);
