@@ -51,7 +51,7 @@ const statusOptions: Array<{ value: TaskStatus; label: string; color: string }> 
 
 const priorityOptions: Array<{ value: TaskPriority; label: string; color: string }> = [
   { value: 'low', label: 'Faible', color: 'text-emerald-600' },
-  { value: 'medium', label: 'Moyenne', color: 'text-blue-600' },
+  { value: 'medium', label: 'Moyenne', color: 'text-amber-600' },
   { value: 'high', label: 'Haute', color: 'text-red-600' },
 ];
 
@@ -134,12 +134,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 md:p-8 z-50 animate-fade-in">
-      <Card className="w-full max-w-5xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200/60 dark:border-gray-700/60 animate-scale-in">
-        <CardHeader className="pb-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 z-50 animate-fade-in">
+      <Card className="w-full max-w-3xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200/60 dark:border-gray-700/60 animate-scale-in max-h-[90vh] flex flex-col overflow-hidden">
+        <CardHeader className="px-6 pt-6 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-600" />
+              <FileText className="h-5 w-5 text-orange-500" />
               {task ? 'Modifier la tâche' : 'Nouvelle tâche'}
             </CardTitle>
             <Button
@@ -153,10 +153,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="flex-1 overflow-y-auto px-6 py-5">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="space-y-2 md:col-span-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="space-y-2 md:col-span-2 xl:col-span-3">
                 <Label htmlFor="title" className="text-sm font-medium">
                   Titre *
                 </Label>
@@ -165,13 +165,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Entrez le titre de la tâche..."
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
                   autoFocus
                   required
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2 md:col-span-2 xl:col-span-2">
                 <Label htmlFor="description" className="text-sm font-medium">
                   Description
                 </Label>
@@ -180,7 +180,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Ajoutez une description (optionnel)..."
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500 min-h-[100px]"
                   rows={3}
                 />
               </div>
@@ -191,7 +191,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   Statut
                 </Label>
                 <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)}>
-                  <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-orange-500">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -210,7 +210,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   Priorité
                 </Label>
                 <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)}>
-                  <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-orange-500">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -233,7 +233,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
@@ -247,11 +247,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={project}
                   onChange={(e) => setProject(e.target.value)}
                   placeholder="Projet associé (optionnel)"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-3">
+              <div className="space-y-2 md:col-span-2 xl:col-span-3">
                 <Label htmlFor="tags" className="text-sm font-medium flex items-center gap-1">
                   <Tag className="h-4 w-4" />
                   Tags
@@ -261,7 +261,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
                   placeholder="Séparez les tags par une virgule (ex: design, release, urgent)"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
                 />
                 {parsedTags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -278,14 +278,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
               </div>
             </div>
 
-            <div className="space-y-3 rounded-lg border border-dashed border-blue-200/60 dark:border-blue-800/60 p-4 bg-blue-50/40 dark:bg-blue-900/10">
+            <div className="space-y-3 rounded-lg border border-dashed border-amber-200/60 dark:border-orange-800/60 p-4 bg-amber-50/40 dark:bg-orange-900/10">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-200">
+                <Clock className="h-4 w-4 text-orange-500" />
+                <span className="text-sm font-medium text-orange-700 dark:text-orange-200">
                   Time blocking
                 </span>
               </div>
-              <p className="text-xs text-blue-700/80 dark:text-blue-200/80">
+              <p className="text-xs text-orange-700/80 dark:text-orange-200/80">
                 Planifiez cette tâche dans votre calendrier (créneau de 30 ou 60 minutes).
               </p>
 
@@ -353,7 +353,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                 type="submit"
                 disabled={!title.trim()}
                 className={cn(
-                  'flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100'
+                  'flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100'
                 )}
               >
                 {task ? 'Modifier' : 'Créer'}

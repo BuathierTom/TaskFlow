@@ -10,14 +10,14 @@ const Profile = () => {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-rose-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-rose-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -28,7 +28,7 @@ const Profile = () => {
               </Button>
             </Link>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
                 Mon Profil
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">

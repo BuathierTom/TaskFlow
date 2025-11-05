@@ -47,7 +47,7 @@ export default function TaskList({
           {!searchQuery && filter === 'all' && (
             <Button
               onClick={showForm}
-              className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="mt-4 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
             >
               <Plus className="h-4 w-4 mr-2" />
               Créer une tâche

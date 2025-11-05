@@ -305,7 +305,7 @@ const FocusView: React.FC<FocusViewProps> = ({
                     </h5>
                     <Badge
                       variant="secondary"
-                      className={task.priority === 'high' ? 'bg-red-100 text-red-600' : task.priority === 'medium' ? 'bg-blue-100 text-blue-600' : 'bg-emerald-100 text-emerald-600'}
+                      className={task.priority === 'high' ? 'bg-red-100 text-red-600' : task.priority === 'medium' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}
                     >
                       {task.priority === 'high' ? 'Haute' : task.priority === 'medium' ? 'Moyenne' : 'Faible'}
                     </Badge>
@@ -352,7 +352,7 @@ const FocusView: React.FC<FocusViewProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => setSelectedTaskId(task.id)}
-                    className={selectedTaskId === task.id ? 'border-blue-500 text-blue-600' : ''}
+                    className={selectedTaskId === task.id ? 'border-orange-500 text-orange-600' : ''}
                   >
                     Pomodoro
                   </Button>

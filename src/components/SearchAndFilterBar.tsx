@@ -1,4 +1,4 @@
-import { Search, Trash2 } from 'lucide-react';
+import { Search, Trash2, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import FilterBar from '@/components/FilterBar';
@@ -21,22 +21,35 @@ export default function SearchAndFilterBar({
   onFilterChange,
   completedCount,
   onClearCompleted,
+  onAddTask,
 }: SearchAndFilterBarProps) {
   return (
-    <div className="mb-6">
-      <div className="flex flex-col sm:flex-row gap-4">
+    <div className="mb-6 space-y-4 rounded-2xl border border-amber-200/70 dark:border-orange-900/40 bg-amber-50/70 dark:bg-gray-900/60 p-4 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Rechercher des tâches..."
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="pl-10 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+            className="pl-10 bg-white/90 dark:bg-gray-800 border-gray-200/70 dark:border-gray-700 focus-visible:ring-orange-500"
           />
         </div>
 
-        <FilterBar filter={filter} onFilterChange={onFilterChange} />
+        {onAddTask && (
+          <Button
+            onClick={onAddTask}
+            className="whitespace-nowrap bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle tâche
+          </Button>
+        )}
+      </div>
 
+      <div className="flex flex-wrap items-center gap-3">
+        <FilterBar filter={filter} onFilterChange={onFilterChange} />
+        <div className="flex-1" />
         {completedCount > 0 && (
           <Button
             variant="outline"

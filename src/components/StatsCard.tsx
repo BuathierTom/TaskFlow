@@ -11,7 +11,7 @@ interface StatsCardProps {
 
 const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color }) => {
   const colorClasses = {
-    blue: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+    blue: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300',
     green: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
     orange: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
     red: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',

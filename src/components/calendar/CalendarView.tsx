@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import {
   addDays,
@@ -44,6 +45,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
   const [scheduleDate, setScheduleDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
   const [scheduleTime, setScheduleTime] = useState('09:00');
   const [scheduleDuration, setScheduleDuration] = useState<'30' | '60'>('30');
+  const [isDayModalOpen, setIsDayModalOpen] = useState(false);
 
   const scheduledTasks = useMemo(() => tasks.filter((task) => task.scheduledAt), [tasks]);
   const unscheduledTasks = useMemo(() => tasks.filter((task) => !task.scheduledAt), [tasks]);
@@ -84,6 +86,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
     due: tasks.filter((task) => !isScheduledOnDay(task, day) && isDueOnDay(task, day)),
   });
 
+  const selectedDayDetails = useMemo(() => getTasksForDay(currentDate), [tasks, currentDate]);
+
   const handleScheduleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedTaskId || !scheduleDate || !scheduleTime) return;
@@ -92,29 +96,50 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
     setSelectedTaskId('');
   };
 
+  const handleDaySelect = (date: Date) => {
+    const nextDate = new Date(date);
+    setCurrentDate(nextDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const normalized = new Date(nextDate);
+    normalized.setHours(0, 0, 0, 0);
+    const candidate = normalized < today ? today : normalized;
+    setScheduleDate(format(candidate, 'yyyy-MM-dd'));
+    setIsDayModalOpen(true);
+  };
+
+  const handleDayKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, date: Date) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleDaySelect(date);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Calendrier</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Visualisez vos échéances et blocs de focus. Convertissez rapidement vos tâches en créneaux dédiés.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => navigate('prev')}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[140px] text-center">
-            {format(currentDate, mode === 'month' ? 'LLLL yyyy' : mode === 'week' ? "'Semaine du' d MMM" : 'd MMMM', {
-              locale: fr,
-            })}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1 rounded-xl border border-gray-200/70 dark:border-gray-700/70 bg-white/60 dark:bg-gray-800/60 px-2 py-1 shadow-sm">
+            <Button variant="ghost" size="icon" onClick={() => navigate('prev')} aria-label="Période précédente">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[140px] text-center px-2">
+              {format(currentDate, mode === 'month' ? 'LLLL yyyy' : mode === 'week' ? "'Semaine du' d MMM" : 'd MMMM', {
+                locale: fr,
+              })}
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => navigate('next')} aria-label="Période suivante">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="outline" size="icon" onClick={() => navigate('next')}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setCurrentDate(new Date())}
             className="flex items-center gap-2"
@@ -126,7 +151,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
       </div>
 
       <Tabs value={mode} onValueChange={(value) => setMode(value as CalendarMode)}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="mt-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-900/60 p-1 rounded-xl w-full">
           <TabsTrigger value="month">Mois</TabsTrigger>
           <TabsTrigger value="week">Semaine</TabsTrigger>
           <TabsTrigger value="day">Jour</TabsTrigger>
@@ -143,14 +168,21 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
             {monthDays.map((day) => {
               const { scheduled, due } = getTasksForDay(day);
               const isToday = isSameDay(day, new Date());
+              const isSelected = isSameDay(day, currentDate);
               return (
                 <Card
                   key={day.toISOString()}
                   className={cn(
-                    'p-3 border border-gray-200/60 dark:border-gray-800/60 bg-white/80 dark:bg-gray-900/70 min-h-[130px] flex flex-col gap-2',
+                    'p-3 border border-gray-200/60 dark:border-gray-800/60 bg-white/80 dark:bg-gray-900/70 min-h-[130px] flex flex-col gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 transition-all',
                     !isSameMonth(day, currentDate) && 'opacity-40',
-                    isToday && 'border-blue-400 shadow-md'
+                    isToday && 'border-orange-400 shadow-md',
+                    isSelected && 'border-orange-500 ring-2 ring-orange-200 dark:ring-orange-800'
                   )}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Voir la journée du ${format(day, 'EEEE d MMMM', { locale: fr })}`}
+                  onClick={() => handleDaySelect(day)}
+                  onKeyDown={(event) => handleDayKeyDown(event, day)}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -167,7 +199,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
                       <button
                         key={task.id}
                         onClick={() => onEdit(task)}
-                        className="text-left text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 rounded-md"
+                        className="text-left text-xs px-2 py-1 bg-amber-100 dark:bg-orange-900/30 text-amber-700 dark:text-amber-200 rounded-md"
                       >
                         {task.title}
                       </button>
@@ -176,7 +208,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
                       <button
                         key={task.id}
                         onClick={() => onEdit(task)}
-                        className="text-left text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-200 rounded-md"
+                        className="text-left text-xs px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-200 rounded-md"
                       >
                         {task.title}
                       </button>
@@ -213,12 +245,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
                     {scheduled.map((task) => (
                       <div
                         key={task.id}
-                        className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700"
+                        className="p-3 rounded-lg bg-amber-50 dark:bg-orange-900/20 border border-amber-200 dark:border-orange-700"
                       >
-                        <div className="text-xs font-semibold text-blue-700 dark:text-blue-200">
+                        <div className="text-xs font-semibold text-amber-700 dark:text-amber-200">
                           {task.title}
                         </div>
-                        <div className="text-xs text-blue-600 dark:text-blue-300 flex items-center gap-1">
+                        <div className="text-xs text-amber-600 dark:text-amber-300 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {format(task.scheduledAt!, 'HH:mm')} · {task.durationMinutes ?? 30} min
                         </div>
@@ -271,13 +303,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
               {dayTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-900/30 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                  className="rounded-lg border border-amber-200 dark:border-orange-800 bg-amber-50/60 dark:bg-orange-900/20 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                 >
                   <div>
-                    <div className="text-sm font-semibold text-blue-700 dark:text-blue-200">
+                    <div className="text-sm font-semibold text-amber-700 dark:text-amber-200">
                       {task.title}
                     </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-300">
+                    <div className="text-xs text-amber-600 dark:text-amber-300">
                       {task.scheduledAt
                         ? `${format(task.scheduledAt, 'HH:mm')} · ${task.durationMinutes ?? 30} min`
                         : task.dueDate
@@ -302,6 +334,112 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
         </TabsContent>
       </Tabs>
 
+      <Dialog open={isDayModalOpen} onOpenChange={setIsDayModalOpen}>
+        <DialogContent className="max-w-3xl space-y-6 bg-white dark:bg-gray-900">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              {format(currentDate, 'EEEE d MMMM', { locale: fr })}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-500 dark:text-gray-400">
+              Consultez vos blocs planifiés et échéances pour cette journée. Utilisez les actions rapides pour modifier ou planifier.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              {selectedDayDetails.scheduled.length} bloc{selectedDayDetails.scheduled.length > 1 ? 's' : ''} planifié{selectedDayDetails.scheduled.length > 1 ? 's' : ''} ·{' '}
+              {selectedDayDetails.due.length} échéance{selectedDayDetails.due.length > 1 ? 's' : ''}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setMode('day');
+                setIsDayModalOpen(false);
+              }}
+            >
+              Ouvrir la vue Jour
+            </Button>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-200">
+                <Clock className="h-4 w-4" />
+                Blocs planifiés
+              </div>
+              {selectedDayDetails.scheduled.length === 0 ? (
+                <p className="text-sm text-amber-600/80 dark:text-amber-300/80">
+                  Aucun bloc prévu. Sélectionnez une tâche dans le formulaire pour réserver un créneau.
+                </p>
+              ) : (
+                selectedDayDetails.scheduled.map((task) => (
+                  <div
+                    key={task.id}
+                    className="rounded-lg border border-amber-200 dark:border-orange-700 bg-amber-50/60 dark:bg-orange-900/20 p-4 space-y-3"
+                  >
+                    <div>
+                    <div className="text-sm font-semibold text-amber-700 dark:text-amber-200">
+                        {task.title}
+                      </div>
+                    <div className="text-xs text-amber-600 dark:text-amber-300 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {format(task.scheduledAt!, 'HH:mm')} · {task.durationMinutes ?? 30} min
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          onEdit(task);
+                          setIsDayModalOpen(false);
+                        }}
+                      >
+                        Ajuster
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => onUnschedule(task.id)}>
+                        Supprimer
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-sm font-semibold text-amber-600 dark:text-amber-300">
+                Échéances
+              </div>
+              {selectedDayDetails.due.length === 0 ? (
+                <p className="text-sm text-amber-600/80 dark:text-amber-300/80">
+                  Rien à échéance pour cette journée.
+                </p>
+              ) : (
+                selectedDayDetails.due.map((task) => (
+                  <button
+                    key={task.id}
+                    onClick={() => {
+                      onEdit(task);
+                      setIsDayModalOpen(false);
+                    }}
+                    className="w-full text-left rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-900/20 p-4 transition hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                  >
+                    <div className="text-sm font-semibold text-amber-700 dark:text-amber-200">
+                      {task.title}
+                    </div>
+                    <div className="text-xs text-amber-600 dark:text-amber-300">
+                      Échéance à {format(task.dueDate!, 'HH:mm')}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Card className="p-6 bg-white/80 dark:bg-gray-900/70 border border-gray-200/60 dark:border-gray-800/60">
         <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4">
           Convertir une tâche en bloc de focus
@@ -317,7 +455,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
               </SelectTrigger>
               <SelectContent>
                 {unscheduledTasks.length === 0 && (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="__no_tasks__" disabled>
                     Toutes les tâches sont planifiées 🎉
                   </SelectItem>
                 )}
@@ -380,11 +518,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
               {scheduledTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-900/30 px-3 py-2 text-xs"
+                  className="flex items-center justify-between rounded-lg border border-amber-200 dark:border-orange-800 bg-amber-50/60 dark:bg-orange-900/20 px-3 py-2 text-xs"
                 >
                   <div>
-                    <div className="font-semibold text-blue-700 dark:text-blue-200">{task.title}</div>
-                    <div className="text-blue-600 dark:text-blue-300 flex items-center gap-1">
+                  <div className="font-semibold text-amber-700 dark:text-amber-200">{task.title}</div>
+                  <div className="text-amber-600 dark:text-amber-300 flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {task.scheduledAt
                         ? `${format(task.scheduledAt, 'EEE d MMM HH:mm', { locale: fr })} · ${task.durationMinutes ?? 30} min`

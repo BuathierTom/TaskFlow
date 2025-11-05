@@ -132,7 +132,7 @@ const KanbanCard: React.FC<{
           className={cn(
             'text-xs',
             task.priority === 'high' && 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-200',
-            task.priority === 'medium' && 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-200',
+            task.priority === 'medium' && 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-200',
             task.priority === 'low' && 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200'
           )}
         >

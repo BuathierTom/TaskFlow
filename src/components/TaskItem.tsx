@@ -34,7 +34,7 @@ interface TaskItemProps {
 
 const priorityStyles: Record<TaskPriority, string> = {
   high: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
 };
 
@@ -216,7 +216,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                         'flex items-center gap-1 px-2 py-1 rounded-full border',
                         isOverdue && !isCompleted
                           ? 'border-red-300 text-red-600 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-900/20'
-                          : 'border-blue-300 text-blue-600 bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:bg-blue-900/20'
+                          : 'border-amber-300 text-amber-600 bg-amber-50 dark:border-amber-700 dark:text-amber-300 dark:bg-amber-900/20'
                       )}
                     >
                       {isOverdue && !isCompleted ? (
@@ -254,7 +254,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={() => onEdit(task)}
-                  className="h-8 w-8 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600"
+                  className="h-8 w-8 hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:text-amber-600"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>

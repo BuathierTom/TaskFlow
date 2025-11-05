@@ -10,7 +10,7 @@ interface AuthProps {
 
 const Auth: React.FC<AuthProps> = ({ mode }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-rose-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
       <div>
         {/* Header */}
         <div className="text-center mb-8">
@@ -20,7 +20,7 @@ const Auth: React.FC<AuthProps> = ({ mode }) => {
               Retour à l'accueil
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent mb-2">
             TaskFlow
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
