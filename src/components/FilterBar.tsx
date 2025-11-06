@@ -2,6 +2,8 @@ import React from 'react';
 import { List, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FilterType } from '@/types/Task';
+import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 
 interface FilterBarProps {
   filter: FilterType;
@@ -9,6 +11,7 @@ interface FilterBarProps {
 }
 
 const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange }) => {
+  const { paletteConfig } = useTheme();
   const filters = [
     {
       key: 'all' as FilterType,
@@ -33,7 +36,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange }) => {
   ];
 
   return (
-    <div className="flex gap-1 bg-amber-100/80 dark:bg-gray-800/80 p-1.5 rounded-lg border border-amber-200/70 dark:border-orange-900/40">
+    <div className={cn('flex gap-1 p-1.5 rounded-lg', paletteConfig.filterContainer)}>
       {filters.map((filterOption) => {
         const isActive = filter === filterOption.key;
         return (
@@ -42,12 +45,10 @@ const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilterChange }) => {
             variant="ghost"
             size="sm"
             onClick={() => onFilterChange(filterOption.key)}
-            className={[
-              "transition-all duration-200 flex items-center gap-2",
-              isActive
-                ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-sm"
-                : "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-white/80 dark:hover:bg-gray-700"
-            ].join(' ')}
+            className={cn(
+              'transition-all duration-200 flex items-center gap-2 px-3',
+              isActive ? paletteConfig.filterActive : paletteConfig.filterInactive
+            )}
           >
             {filterOption.icon}
             <span className="hidden sm:inline">{filterOption.label}</span>

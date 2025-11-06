@@ -3,14 +3,17 @@ import { SignIn, SignUp } from '@clerk/clerk-react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 
 interface AuthProps {
   mode: 'sign-in' | 'sign-up';
 }
 
 const Auth: React.FC<AuthProps> = ({ mode }) => {
+  const { paletteConfig } = useTheme();
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-rose-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
+    <div className={cn('min-h-screen bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4', paletteConfig.backgroundLight)}>
       <div>
         {/* Header */}
         <div className="text-center mb-8">
@@ -20,7 +23,7 @@ const Auth: React.FC<AuthProps> = ({ mode }) => {
               Retour à l'accueil
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent mb-2">
+          <h1 className={cn('text-3xl font-bold bg-clip-text text-transparent mb-2', paletteConfig.headerGradient)}>
             TaskFlow
           </h1>
           <p className="text-gray-600 dark:text-gray-400">

@@ -17,6 +17,8 @@ import {
   Tag,
   Briefcase,
 } from 'lucide-react';
+import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 
 interface FocusViewProps {
   tasks: Task[];
@@ -40,6 +42,7 @@ const FocusView: React.FC<FocusViewProps> = ({
   onPauseTimer,
   onCompletePomodoro,
 }) => {
+  const { paletteConfig } = useTheme();
   const [pomodoroDuration, setPomodoroDuration] = useState(25 * 60);
   const [remainingSeconds, setRemainingSeconds] = useState(pomodoroDuration);
   const [isPomodoroRunning, setIsPomodoroRunning] = useState(false);
@@ -201,9 +204,9 @@ const FocusView: React.FC<FocusViewProps> = ({
           </div>
         </Card>
 
-        <Card className="p-5 bg-white/80 dark:bg-gray-900/70 border border-gray-200/60 dark:border-gray-800/60">
+        <Card className={cn('p-5', paletteConfig.cardSurface)}>
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">
-            <Flame className="h-3 w-3 text-orange-500" />
+            <Flame className={cn('h-3 w-3', paletteConfig.accentIcon)} />
             Pomodoro
           </div>
           <div className="mt-3">
@@ -249,7 +252,7 @@ const FocusView: React.FC<FocusViewProps> = ({
                   setRemainingSeconds(duration);
                 }}
               >
-                <SelectTrigger size="sm">
+                <SelectTrigger size="sm" className={cn(paletteConfig.focusRing)}>
                   <SelectValue placeholder="Durée" />
                 </SelectTrigger>
                 <SelectContent>
@@ -296,7 +299,10 @@ const FocusView: React.FC<FocusViewProps> = ({
             return (
               <div
                 key={task.id}
-                className="rounded-lg border border-gray-200/60 dark:border-gray-800/60 bg-gray-50/60 dark:bg-gray-800/60 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                className={cn(
+                  'rounded-lg p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between',
+                  paletteConfig.cardSurface
+                )}
               >
                 <div>
                   <div className="flex items-center gap-2">
@@ -305,7 +311,13 @@ const FocusView: React.FC<FocusViewProps> = ({
                     </h5>
                     <Badge
                       variant="secondary"
-                      className={task.priority === 'high' ? 'bg-red-100 text-red-600' : task.priority === 'medium' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}
+                      className={cn(
+                        task.priority === 'high'
+                          ? 'bg-red-100 text-red-600'
+                          : task.priority === 'medium'
+                          ? paletteConfig.accentBadge
+                          : 'bg-emerald-100 text-emerald-600'
+                      )}
                     >
                       {task.priority === 'high' ? 'Haute' : task.priority === 'medium' ? 'Moyenne' : 'Faible'}
                     </Badge>
@@ -331,8 +343,8 @@ const FocusView: React.FC<FocusViewProps> = ({
                       {formatSeconds(task.trackedSeconds)}
                     </span>
                     {task.pomodoroSessions > 0 && (
-                      <span className="flex items-center gap-1 text-orange-500">
-                        <Flame className="h-3 w-3" />
+                      <span className={cn('flex items-center gap-1', paletteConfig.accentText)}>
+                        <Flame className={cn('h-3 w-3', paletteConfig.accentIcon)} />
                         {task.pomodoroSessions} × pomodoro
                       </span>
                     )}
@@ -352,7 +364,9 @@ const FocusView: React.FC<FocusViewProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => setSelectedTaskId(task.id)}
-                    className={selectedTaskId === task.id ? 'border-orange-500 text-orange-600' : ''}
+                    className={cn(
+                      selectedTaskId === task.id && paletteConfig.accentBorder
+                    )}
                   >
                     Pomodoro
                   </Button>

@@ -7,6 +7,7 @@ import { useTasksContext } from '@/context/TasksContext';
 
 import Layout from '@/layouts/Layout';
 import Header from '@/layouts/Header';
+import StatsSection from '@/components/StatsSection';
 import SearchAndFilterBar from '@/components/SearchAndFilterBar';
 import TaskList from '@/components/TaskList';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
@@ -17,6 +18,10 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Circle, ListTodo, KanbanSquare, CalendarRange, Timer } from 'lucide-react';
 import AuthHeader from '@/components/AuthHeader';
+import { useTheme } from '@/hooks/use-theme';
+import FocusSummaryWidget from '@/components/dashboard/FocusSummaryWidget';
+import HabitsWidget from '@/components/dashboard/HabitsWidget';
+import { useDashboardSettings } from '@/context/DashboardSettingsContext';
 
 const Index = () => {
   const { isSignedIn } = useAuth();
@@ -43,6 +48,8 @@ const Index = () => {
     [tasks]
   );
   const hasTasks = tasks.length > 0;
+  const { paletteConfig } = useTheme();
+  const { settings } = useDashboardSettings();
 
   const isOverdue = (task: Task) => {
     return task.dueDate && task.status !== 'completed' && new Date() > task.dueDate;
@@ -72,6 +79,15 @@ const Index = () => {
 
     return filtered;
   }, [tasks, searchQuery, filter]);
+
+  const stats = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter(task => task.status === 'completed').length;
+    const inProgress = tasks.filter(task => task.status === 'in-progress').length;
+    const overdue = tasks.filter(task => isOverdue(task)).length;
+
+    return { total, completed, inProgress, overdue };
+  }, [tasks]);
 
   const openCreateForm = () => {
     setEditingTask(null);
@@ -154,7 +170,7 @@ const Index = () => {
       />
 
       {!isSignedIn && (
-        <Card className="mb-6 shadow-sm border-0 bg-amber-50/80 dark:bg-orange-900/20 backdrop-blur-sm border-amber-200 dark:border-orange-800">
+        <Card className={cn('mb-6 shadow-sm border-0 backdrop-blur-sm', paletteConfig.cardSurface)}>
           <CardContent className="p-6 text-center">
             <div className="flex flex-col items-center gap-4">
               <div className="text-amber-500 dark:text-orange-400">
@@ -176,6 +192,15 @@ const Index = () => {
         </Card>
       )}
 
+      {settings.showStats && <StatsSection stats={stats} />}
+
+      {(settings.showFocusWidget || settings.showHabitsWidget) && (
+        <div className="grid gap-4 mb-6 md:grid-cols-2">
+          {settings.showFocusWidget && <FocusSummaryWidget />}
+          {settings.showHabitsWidget && <HabitsWidget />}
+        </div>
+      )}
+
       <div className="flex flex-col gap-6 lg:flex-row">
         <aside className="lg:w-72">
           <Card className="border-0 bg-white/70 dark:bg-gray-900/60 shadow-sm overflow-hidden">
@@ -191,10 +216,13 @@ const Index = () => {
                       key={option.key}
                       variant="ghost"
                       className={cn(
-                        'w-full justify-start rounded-2xl border border-transparent px-5 py-4 text-left transition-all shadow-sm',
+                        'w-full justify-start rounded-2xl border px-5 py-4 text-left transition-all shadow-sm',
                         isActive
-                          ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg hover:from-orange-600 hover:to-pink-600'
-                          : 'bg-white/90 dark:bg-gray-800/70 text-gray-700 dark:text-gray-200 hover:border-orange-200 dark:hover:border-gray-600 hover:bg-white hover:text-orange-600 dark:hover:bg-gray-800'
+                          ? cn('text-white shadow-lg', paletteConfig.ctaGradient, paletteConfig.ctaHover)
+                          : cn(
+                              'bg-white/90 dark:bg-gray-800/70 text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800',
+                              paletteConfig.accentBorderHover
+                            )
                       )}
                       onClick={() => setActiveView(option.key)}
                     >
@@ -264,17 +292,17 @@ const Index = () => {
                     <h4 className="text-base font-semibold text-gray-700 dark:text-gray-200">
                       Vue Kanban en attente de tâches
                     </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Créez une tâche pour alimenter vos colonnes et suivre l&apos;avancement en un clin d&apos;œil.
-                    </p>
-                    <Button
-                      onClick={openCreateForm}
-                      className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-                    >
-                      Ajouter une tâche
-                    </Button>
-                  </CardContent>
-                </Card>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Créez une tâche pour alimenter vos colonnes et suivre l&apos;avancement en un clin d&apos;œil.
+                </p>
+                <Button
+                  onClick={openCreateForm}
+                  className={cn('text-white', paletteConfig.ctaGradient, paletteConfig.ctaHover)}
+                >
+                  Ajouter une tâche
+                </Button>
+              </CardContent>
+            </Card>
               )}
 
               <KanbanBoard
@@ -363,6 +391,7 @@ const Index = () => {
             setShowForm(false);
             setEditingTask(null);
           }}
+          allTasks={tasks}
         />
       )}
     </Layout>

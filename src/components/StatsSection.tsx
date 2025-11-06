@@ -1,6 +1,7 @@
 import { Clock, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/use-theme';
 
 interface StatsSectionProps {
   stats: {
@@ -12,13 +13,14 @@ interface StatsSectionProps {
 }
 
 export default function StatsSection({ stats }: StatsSectionProps) {
+  const { paletteConfig } = useTheme();
   const items = [
     {
       label: 'Total',
       value: stats.total,
       icon: <Circle className="h-4 w-4" />,
-      accent: 'text-amber-600 dark:text-amber-300',
-      chip: 'bg-amber-100/80 dark:bg-amber-900/30',
+      accent: paletteConfig.accentText,
+      chip: paletteConfig.accentBadge,
     },
     {
       label: 'En cours',
@@ -44,7 +46,7 @@ export default function StatsSection({ stats }: StatsSectionProps) {
   ];
 
   return (
-    <Card className="border-0 shadow-sm bg-amber-50/70 dark:bg-gray-900/60 backdrop-blur-sm mb-6">
+    <Card className={cn('border-0 shadow-sm backdrop-blur-sm mb-6', paletteConfig.cardSurface)}>
       <CardContent className="p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-1">

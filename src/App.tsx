@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TasksProvider } from "@/context/TasksContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { DashboardSettingsProvider } from "@/context/DashboardSettingsContext";
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
 import SignIn from "./pages/auth/SignIn";
@@ -19,6 +21,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ThemeProvider>
+      <DashboardSettingsProvider>
       <TasksProvider>
         <BrowserRouter>
           <Routes>
@@ -31,6 +35,8 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TasksProvider>
+      </DashboardSettingsProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

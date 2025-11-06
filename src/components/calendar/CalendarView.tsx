@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/use-theme';
 import {
   addDays,
   addWeeks,
@@ -39,6 +40,7 @@ const isDueOnDay = (task: Task, day: Date) =>
   task.dueDate ? isSameDay(task.dueDate, day) : false;
 
 const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnschedule, onEdit }) => {
+  const { paletteConfig } = useTheme();
   const [mode, setMode] = useState<CalendarMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string>('');
@@ -173,7 +175,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSchedule, onUnsche
                 <Card
                   key={day.toISOString()}
                   className={cn(
-                    'p-3 border border-gray-200/60 dark:border-gray-800/60 bg-white/80 dark:bg-gray-900/70 min-h-[130px] flex flex-col gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 transition-all',
+                    'p-3 border border-gray-200/60 dark:border-gray-800/60 bg-white/80 dark:bg-gray-900/70 min-h-[130px] flex flex-col gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 transition-all',
+                    paletteConfig.focusVisibleRing,
                     !isSameMonth(day, currentDate) && 'opacity-40',
                     isToday && 'border-orange-400 shadow-md',
                     isSelected && 'border-orange-500 ring-2 ring-orange-200 dark:ring-orange-800'

@@ -32,6 +32,16 @@ export interface Task {
   pomodoroSessions: number;
   pomodoroSeconds: number;
   postponedCount: number;
+  subtasks: SubTask[];
+  dependencies: string[];
+  difficultyPoints?: number;
+  estimatedHours?: number;
+}
+
+export interface SubTask {
+  id: string;
+  title: string;
+  completed: boolean;
 }
 
 export type TaskInput = Omit<

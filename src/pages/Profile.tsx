@@ -4,20 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Mail, Calendar, LogOut, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 
 const Profile = () => {
   const { user, isLoaded } = useUser();
+  const { paletteConfig } = useTheme();
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-rose-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center">
+      <div className={cn('min-h-screen bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center', paletteConfig.backgroundLight)}>
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-rose-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <div className={cn('min-h-screen bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-gray-950', paletteConfig.backgroundLight)}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -28,7 +31,7 @@ const Profile = () => {
               </Button>
             </Link>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              <h1 className={cn('text-4xl font-bold bg-clip-text text-transparent', paletteConfig.headerGradient)}>
                 Mon Profil
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">

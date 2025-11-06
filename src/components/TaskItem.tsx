@@ -17,8 +17,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Task, TaskPriority } from '@/types/Task';
 import { cn } from '@/lib/utils';
+import { useTasksContext } from '@/context/TasksContext';
+import { useTheme } from '@/hooks/use-theme';
 
 interface TaskItemProps {
   task: Task;
@@ -31,12 +34,6 @@ interface TaskItemProps {
   className?: string;
   style?: React.CSSProperties;
 }
-
-const priorityStyles: Record<TaskPriority, string> = {
-  high: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-};
 
 const statusConfigMap = {
   completed: {
@@ -81,6 +78,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
   className,
   style,
 }) => {
+  const { tasks: allTasks } = useTasksContext();
+  const { paletteConfig } = useTheme();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -104,6 +103,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
   }, [task.trackedSeconds, task.activeTimer, now]);
 
   const statusConfig = statusConfigMap[task.status];
+  const priorityStyles: Record<TaskPriority, string> = useMemo(
+    () => ({
+      high: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+      medium: paletteConfig.accentBadge,
+      low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    }),
+    [paletteConfig.accentBadge]
+  );
   const isCompleted = task.status === 'completed';
   const isTimerRunning = Boolean(task.activeTimer);
 
@@ -149,10 +156,36 @@ const TaskItem: React.FC<TaskItemProps> = ({
     return { start, end };
   }, [task.scheduledAt, task.durationMinutes]);
 
+  const completedSubtaskCount = useMemo(
+    () => task.subtasks.filter((subtask) => subtask.completed).length,
+    [task.subtasks]
+  );
+
+  const dependencyDetails = useMemo(
+    () =>
+      task.dependencies
+        .map((id) => allTasks.find((candidate) => candidate.id === id))
+        .filter((candidate): candidate is Task => Boolean(candidate)),
+    [task.dependencies, allTasks]
+  );
+
+  const blockingDependencies = useMemo(
+    () => dependencyDetails.filter((dependency) => dependency.status !== 'completed'),
+    [dependencyDetails]
+  );
+
+  const handleSubtaskToggle = (subtaskId: string) => {
+    const updatedSubtasks = task.subtasks.map((subtask) =>
+      subtask.id === subtaskId ? { ...subtask, completed: !subtask.completed } : subtask
+    );
+    onUpdate(task.id, { subtasks: updatedSubtasks });
+  };
+
   return (
     <Card
       className={cn(
-        'group transition-all duration-200 hover:shadow-md border border-gray-200/50 dark:border-gray-700/40 bg-white/60 dark:bg-gray-900/50 backdrop-blur',
+        'group transition-all duration-200 hover:shadow-md backdrop-blur border',
+        paletteConfig.cardSurface,
         isOverdue && !isCompleted && 'ring-2 ring-red-200 dark:ring-red-700 bg-red-50/40 dark:bg-red-900/20',
         isCompleted && 'opacity-75',
         className
@@ -216,7 +249,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                         'flex items-center gap-1 px-2 py-1 rounded-full border',
                         isOverdue && !isCompleted
                           ? 'border-red-300 text-red-600 bg-red-50 dark:border-red-700 dark:text-red-300 dark:bg-red-900/20'
-                          : 'border-amber-300 text-amber-600 bg-amber-50 dark:border-amber-700 dark:text-amber-300 dark:bg-amber-900/20'
+                          : paletteConfig.dueBadge
                       )}
                     >
                       {isOverdue && !isCompleted ? (
@@ -240,13 +273,58 @@ const TaskItem: React.FC<TaskItemProps> = ({
                       )}
                     </span>
                   )}
-                  {scheduledInfo && (
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-full border border-purple-300 text-purple-600 bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:bg-purple-900/20">
+                {scheduledInfo && (
+                    <span className={cn('flex items-center gap-1 px-2 py-1 rounded-full border', paletteConfig.scheduleBadge)}>
                       <Clock className="h-3 w-3" />
                       {formatDate(scheduledInfo.start)} · {task.durationMinutes ?? 30} min
                     </span>
                   )}
                 </div>
+              </div>
+
+              {task.subtasks.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>
+                      Checklist ({completedSubtaskCount}/{task.subtasks.length})
+                    </span>
+                    {completedSubtaskCount === task.subtasks.length && task.subtasks.length > 0 && (
+                      <span className="text-emerald-600 dark:text-emerald-300">Tout est prêt</span>
+                    )}
+                  </div>
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                    {task.subtasks.map((subtask) => (
+                      <label
+                        key={subtask.id}
+                        className="flex items-center gap-2 rounded-md border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/40 px-2 py-1 text-xs text-gray-600 dark:text-gray-300"
+                      >
+                        <Checkbox
+                          checked={subtask.completed}
+                          onCheckedChange={() => handleSubtaskToggle(subtask.id)}
+                        />
+                        <span className={cn('flex-1', subtask.completed && 'line-through opacity-70')}>
+                          {subtask.title}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1 mt-3">
+                {typeof task.difficultyPoints === 'number' && (
+                  <div>Difficulté: {task.difficultyPoints}</div>
+                )}
+                {typeof task.estimatedHours === 'number' && (
+                  <div>Estimation: {task.estimatedHours} h</div>
+                )}
+                {task.dependencies.length > 0 && (
+                  <div className={cn('flex items-center gap-1', blockingDependencies.length > 0 && 'text-red-500')}>
+                    <AlertCircle className="h-3 w-3" />
+                    Dépend de {task.dependencies.length} tâche{task.dependencies.length > 1 ? 's' : ''}
+                    {blockingDependencies.length > 0 && ` · ${blockingDependencies.length} en attente`}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">

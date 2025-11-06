@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/use-theme';
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -53,7 +54,12 @@ const KanbanCard: React.FC<{
   onStartTimer: (id: string) => void;
   onPauseTimer: (id: string) => void;
 }> = ({ task, onEdit, onDelete, onUpdate, onStartTimer, onPauseTimer }) => {
+  const { paletteConfig } = useTheme();
   const isTimerRunning = Boolean(task.activeTimer);
+  const completedSubtasks = useMemo(
+    () => task.subtasks.filter((subtask) => subtask.completed).length,
+    [task.subtasks]
+  );
 
   const handleStatusChange = (nextStatus: Task['status']) => {
     onUpdate(task.id, { status: nextStatus });
@@ -74,7 +80,7 @@ const KanbanCard: React.FC<{
       : null;
 
   return (
-    <div className="rounded-lg border border-gray-200/60 dark:border-gray-700/60 bg-white/70 dark:bg-gray-900/60 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+    <div className={cn('rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 border', paletteConfig.cardSurface)}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{task.title}</h4>
@@ -132,7 +138,7 @@ const KanbanCard: React.FC<{
           className={cn(
             'text-xs',
             task.priority === 'high' && 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-200',
-            task.priority === 'medium' && 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-200',
+            task.priority === 'medium' && paletteConfig.accentBadge,
             task.priority === 'low' && 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200'
           )}
         >
@@ -158,12 +164,33 @@ const KanbanCard: React.FC<{
         </div>
       )}
 
+      {task.subtasks.length > 0 && (
+        <div className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+          Checklist: {completedSubtasks}/{task.subtasks.length}
+        </div>
+      )}
+
       <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1 mb-3">
-        {task.dueDate && <div>Échéance: {formatTime(task.dueDate)}</div>}
-        {task.scheduledAt && (
-          <div>
-            Bloc: {formatTime(task.scheduledAt)} · {task.durationMinutes ?? 30} min
+        {task.dueDate && (
+          <div className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-full border', paletteConfig.dueBadge)}>
+            <Clock className="h-3 w-3" />
+            {formatTime(task.dueDate)}
           </div>
+        )}
+        {task.scheduledAt && (
+          <div className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-full border', paletteConfig.scheduleBadge)}>
+            <Clock className="h-3 w-3" />
+            {formatTime(task.scheduledAt)} · {task.durationMinutes ?? 30} min
+          </div>
+        )}
+        {typeof task.difficultyPoints === 'number' && (
+          <div>Difficulté: {task.difficultyPoints}</div>
+        )}
+        {typeof task.estimatedHours === 'number' && (
+          <div>Estimation: {task.estimatedHours} h</div>
+        )}
+        {task.dependencies.length > 0 && (
+          <div>Dépendances: {task.dependencies.length}</div>
         )}
       </div>
 

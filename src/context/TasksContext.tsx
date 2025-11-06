@@ -86,6 +86,10 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         pomodoroSessions: 0,
         pomodoroSeconds: 0,
         postponedCount: 0,
+        subtasks: input.subtasks ?? [],
+        dependencies: input.dependencies ?? [],
+        difficultyPoints: input.difficultyPoints,
+        estimatedHours: input.estimatedHours,
       };
 
       setTasks((prev) => [newTask, ...prev]);

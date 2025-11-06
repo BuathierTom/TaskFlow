@@ -9,10 +9,13 @@ import {
   Clock,
   Timer,
   Zap,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -22,8 +25,9 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Task, TaskPriority, TaskStatus } from '@/types/Task';
+import { Task, TaskPriority, TaskStatus, SubTask } from '@/types/Task';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/use-theme';
 
 interface TaskFormData {
   title: string;
@@ -35,12 +39,17 @@ interface TaskFormData {
   project?: string;
   scheduledAt?: Date;
   durationMinutes?: 30 | 60;
+  subtasks: SubTask[];
+  dependencies: string[];
+  difficultyPoints?: number;
+  estimatedHours?: number;
 }
 
 interface TaskFormProps {
   task?: Task | null;
   onSubmit: (task: TaskFormData) => void;
   onCancel: () => void;
+  allTasks: Task[];
 }
 
 const statusOptions: Array<{ value: TaskStatus; label: string; color: string }> = [
@@ -55,7 +64,8 @@ const priorityOptions: Array<{ value: TaskPriority; label: string; color: string
   { value: 'high', label: 'Haute', color: 'text-red-600' },
 ];
 
-const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel, allTasks }) => {
+  const { paletteConfig } = useTheme();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>('todo');
@@ -66,6 +76,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [durationMinutes, setDurationMinutes] = useState<30 | 60 | ''>('');
+  const [subtasks, setSubtasks] = useState<SubTask[]>([]);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [selectedDependencies, setSelectedDependencies] = useState<string[]>([]);
+  const [difficultyPoints, setDifficultyPoints] = useState<string>('');
+  const [estimatedHours, setEstimatedHours] = useState<string>('');
 
   useEffect(() => {
     if (task) {
@@ -85,6 +100,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
         setScheduledTime('');
       }
       setDurationMinutes(task.durationMinutes || '');
+      setSubtasks(task.subtasks ?? []);
+      setSelectedDependencies(task.dependencies ?? []);
+      setDifficultyPoints(
+        typeof task.difficultyPoints === 'number' ? String(task.difficultyPoints) : ''
+      );
+      setEstimatedHours(
+        typeof task.estimatedHours === 'number' ? String(task.estimatedHours) : ''
+      );
     } else {
       setTitle('');
       setDescription('');
@@ -96,6 +119,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
       setScheduledDate('');
       setScheduledTime('');
       setDurationMinutes('');
+      setSubtasks([]);
+      setSelectedDependencies([]);
+      setDifficultyPoints('');
+      setEstimatedHours('');
     }
   }, [task]);
 
@@ -120,6 +147,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
       scheduledAt = new Date(`${scheduledDate}T${scheduledTime}:00`);
     }
 
+    const sanitizedSubtasks = subtasks
+      .map((subtask) => ({ ...subtask, title: subtask.title.trim() }))
+      .filter((subtask) => subtask.title.length > 0);
+
+    const uniqueDependencies = Array.from(new Set(selectedDependencies));
+
+    const parsedDifficulty = difficultyPoints.trim() === '' ? undefined : Number(difficultyPoints);
+    const parsedEstimate = estimatedHours.trim() === '' ? undefined : Number(estimatedHours);
+    const difficultyValue = parsedDifficulty !== undefined && Number.isFinite(parsedDifficulty) ? parsedDifficulty : undefined;
+    const estimateValue = parsedEstimate !== undefined && Number.isFinite(parsedEstimate) ? parsedEstimate : undefined;
+
     onSubmit({
       title: title.trim(),
       description: description.trim() || undefined,
@@ -130,7 +168,43 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
       project: project.trim() || undefined,
       scheduledAt,
       durationMinutes: isTimeBlockingComplete ? (durationMinutes as 30 | 60) : undefined,
+      subtasks: sanitizedSubtasks,
+      dependencies: uniqueDependencies,
+      difficultyPoints: difficultyValue,
+      estimatedHours: estimateValue,
     });
+  };
+
+  const handleAddSubtask = () => {
+    const title = newSubtaskTitle.trim();
+    if (!title) return;
+    setSubtasks((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        title,
+        completed: false,
+      },
+    ]);
+    setNewSubtaskTitle('');
+  };
+
+  const updateSubtaskTitle = (id: string, title: string) => {
+    setSubtasks((prev) => prev.map((subtask) => (subtask.id === id ? { ...subtask, title } : subtask)));
+  };
+
+  const toggleSubtaskCompleted = (id: string) => {
+    setSubtasks((prev) => prev.map((subtask) => (subtask.id === id ? { ...subtask, completed: !subtask.completed } : subtask)));
+  };
+
+  const removeSubtask = (id: string) => {
+    setSubtasks((prev) => prev.filter((subtask) => subtask.id !== id));
+  };
+
+  const toggleDependency = (id: string) => {
+    setSelectedDependencies((prev) =>
+      prev.includes(id) ? prev.filter((depId) => depId !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -165,7 +239,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Entrez le titre de la tâche..."
-                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
+                  className={cn('transition-all duration-200 focus:ring-2', paletteConfig.focusRing)}
                   autoFocus
                   required
                 />
@@ -180,7 +254,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Ajoutez une description (optionnel)..."
-                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500 min-h-[100px]"
+                  className={cn('transition-all duration-200 focus:ring-2 min-h-[100px]', paletteConfig.focusRing)}
                   rows={3}
                 />
               </div>
@@ -191,7 +265,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   Statut
                 </Label>
                 <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)}>
-                <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-orange-500">
+                <SelectTrigger className={cn('transition-all duration-200 focus:ring-2', paletteConfig.focusRing)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -210,7 +284,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   Priorité
                 </Label>
                 <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)}>
-                <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-orange-500">
+                <SelectTrigger className={cn('transition-all duration-200 focus:ring-2', paletteConfig.focusRing)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -233,7 +307,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
+                  className={cn('transition-all duration-200 focus:ring-2', paletteConfig.focusRing)}
                 />
               </div>
 
@@ -247,7 +321,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={project}
                   onChange={(e) => setProject(e.target.value)}
                   placeholder="Projet associé (optionnel)"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
+                  className={cn('transition-all duration-200 focus:ring-2', paletteConfig.focusRing)}
                 />
               </div>
 
@@ -261,7 +335,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
                   placeholder="Séparez les tags par une virgule (ex: design, release, urgent)"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-orange-500"
+                  className={cn('transition-all duration-200 focus:ring-2', paletteConfig.focusRing)}
                 />
                 {parsedTags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -275,6 +349,36 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="difficulty" className="text-sm font-medium">
+                  Points de difficulté
+                </Label>
+                <Input
+                  id="difficulty"
+                  type="number"
+                  min={0}
+                  value={difficultyPoints}
+                  onChange={(event) => setDifficultyPoints(event.target.value)}
+                  placeholder="Ex: 5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estimate" className="text-sm font-medium">
+                  Estimation (heures)
+                </Label>
+                <Input
+                  id="estimate"
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  value={estimatedHours}
+                  onChange={(event) => setEstimatedHours(event.target.value)}
+                  placeholder="Ex: 2.5"
+                />
               </div>
             </div>
 
@@ -340,6 +444,85 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
               )}
             </div>
 
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Checklist</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={newSubtaskTitle}
+                      onChange={(event) => setNewSubtaskTitle(event.target.value)}
+                      placeholder="Ajouter une sous-tâche"
+                    />
+                    <Button type="button" variant="secondary" onClick={handleAddSubtask} className="shrink-0">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {subtasks.length === 0 ? (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Aucune sous-tâche pour le moment.
+                      </p>
+                    ) : (
+                      subtasks.map((subtask) => (
+                        <div
+                          key={subtask.id}
+                          className="flex items-start gap-2 rounded-lg border border-gray-200/70 dark:border-gray-800/60 bg-white/80 dark:bg-gray-900/40 p-2"
+                        >
+                          <Checkbox
+                            checked={subtask.completed}
+                            onCheckedChange={() => toggleSubtaskCompleted(subtask.id)}
+                            className="mt-1"
+                          />
+                          <Input
+                            value={subtask.title}
+                            onChange={(event) => updateSubtaskTitle(subtask.id, event.target.value)}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeSubtask(subtask.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Dépendances</Label>
+                <div className="rounded-lg border border-gray-200/70 dark:border-gray-800/60 bg-white/80 dark:bg-gray-900/40 p-3 max-h-48 overflow-y-auto">
+                  {allTasks.filter((candidate) => candidate.id !== task?.id).length === 0 ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Aucune autre tâche disponible.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {allTasks
+                        .filter((candidate) => candidate.id !== task?.id)
+                        .map((candidate) => (
+                          <label key={candidate.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                            <Checkbox
+                              checked={selectedDependencies.includes(candidate.id)}
+                              onCheckedChange={() => toggleDependency(candidate.id)}
+                            />
+                            <span>{candidate.title}</span>
+                          </label>
+                        ))}
+                    </div>
+                  )}
+                </div>
+                {selectedDependencies.length > 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Cette tâche dépend de {selectedDependencies.length} autre{selectedDependencies.length > 1 ? 's' : ''} tâche{selectedDependencies.length > 1 ? 's' : ''}.
+                  </p>
+                )}
+              </div>
+            </div>
+
             <div className="flex gap-3 pt-2">
               <Button
                 type="button"
@@ -353,7 +536,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSubmit, onCancel }) => {
                 type="submit"
                 disabled={!title.trim()}
                 className={cn(
-                  'flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100'
+                  'flex-1 transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100 text-white',
+                  paletteConfig.ctaGradient,
+                  paletteConfig.ctaHover
                 )}
               >
                 {task ? 'Modifier' : 'Créer'}

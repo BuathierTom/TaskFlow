@@ -10,10 +10,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 
 const AuthHeader = () => {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
+
+  const { paletteConfig } = useTheme();
 
   if (!isSignedIn) {
     return (
@@ -25,7 +29,14 @@ const AuthHeader = () => {
           </Button>
         </Link>
         <Link to="/auth/sign-up">
-          <Button size="sm" className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
+          <Button
+            size="sm"
+            className={cn(
+              'text-white',
+              paletteConfig.ctaGradient,
+              paletteConfig.ctaHover
+            )}
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             S'inscrire
           </Button>

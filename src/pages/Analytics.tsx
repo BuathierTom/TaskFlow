@@ -4,6 +4,8 @@ import Layout from '@/layouts/Layout';
 import { useTasksContext } from '@/context/TasksContext';
 import StatsSection from '@/components/StatsSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -250,12 +252,14 @@ const Analytics = () => {
     },
   ];
 
+  const { paletteConfig } = useTheme();
+
   const indicatorContent = (
     <div className="grid gap-6 xl:grid-cols-2">
       {indicatorGroups.map((group) => (
         <Card
           key={group.key}
-          className="p-6 bg-white/80 dark:bg-gray-900/70 border border-gray-200/60 dark:border-gray-800/60"
+          className={cn('p-6', paletteConfig.cardSurface)}
         >
           <div className="mb-5 space-y-1.5">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -298,7 +302,7 @@ const Analytics = () => {
 
   const focusContent = (
     <div className="grid gap-6 xl:grid-cols-2">
-      <Card className="p-6 bg-white/80 dark:bg-gray-900/70 border border-gray-200/60 dark:border-gray-800/60">
+      <Card className={cn('p-6', paletteConfig.cardSurface)}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -331,7 +335,7 @@ const Analytics = () => {
         </ChartContainer>
       </Card>
 
-      <Card className="p-6 bg-white/80 dark:bg-gray-900/70 border border-gray-200/60 dark:border-gray-800/60">
+      <Card className={cn('p-6', paletteConfig.cardSurface)}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -365,7 +369,7 @@ const Analytics = () => {
 
   const analysisContent = (
     <div className="grid gap-6 xl:grid-cols-2">
-      <Card className="p-6 bg-white/80 dark:bg-gray-900/70 border border-gray-200/60 dark:border-gray-800/60">
+      <Card className={cn('p-6', paletteConfig.cardSurface)}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -395,7 +399,7 @@ const Analytics = () => {
         </ResponsiveContainer>
       </Card>
 
-      <Card className="p-6 bg-white/80 dark:bg-gray-900/70 border border-gray-200/60 dark:border-gray-800/60">
+      <Card className={cn('p-6', paletteConfig.cardSurface)}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -468,7 +472,7 @@ const Analytics = () => {
       <div className="space-y-10">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            <h1 className={cn('text-3xl font-bold bg-clip-text text-transparent', paletteConfig.headerGradient)}>
               Insights & Statistiques
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -491,12 +495,21 @@ const Analytics = () => {
           }
           className="space-y-6"
         >
-          <TabsList className="flex w-full items-center gap-2 rounded-xl border border-amber-200/60 bg-amber-50/90 p-2 shadow-sm dark:border-orange-900/50 dark:bg-gray-900/70">
+          <TabsList
+            className={cn(
+              'flex w-full items-center gap-2 rounded-xl p-2 shadow-sm',
+              paletteConfig.filterContainer
+            )}
+          >
             {analyticsTabs.map((tab) => (
               <TabsTrigger
                 key={tab.key}
                 value={tab.key}
-                className="flex-1 min-w-[200px] justify-center rounded-lg px-4 py-2 text-sm font-medium text-amber-700 transition-all hover:bg-white/70 dark:text-amber-200 dark:hover:bg-gray-800 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm"
+                className={cn(
+                  'flex-1 min-w-[200px] justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all',
+                  paletteConfig.filterInactive,
+                  paletteConfig.tabActive
+                )}
               >
                 {tab.label}
               </TabsTrigger>

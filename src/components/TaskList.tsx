@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import TaskItem from '@/components/TaskItem';
 import { Task } from '@/types/Task';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 
 interface TaskListProps {
   tasks: Task[];
@@ -29,6 +31,7 @@ export default function TaskList({
   searchQuery,
   filter,
 }: TaskListProps) {
+  const { paletteConfig } = useTheme();
   if (tasks.length === 0) {
     return (
       <Card className="border-0 shadow-sm bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm">
@@ -47,7 +50,11 @@ export default function TaskList({
           {!searchQuery && filter === 'all' && (
             <Button
               onClick={showForm}
-              className="mt-4 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+              className={cn(
+                'mt-4 text-white',
+                paletteConfig.ctaGradient,
+                paletteConfig.ctaHover
+              )}
             >
               <Plus className="h-4 w-4 mr-2" />
               Créer une tâche

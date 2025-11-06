@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Task, TimeLog, TaskPriority, TaskStatus } from '@/types/Task';
+import { Task, TimeLog, TaskPriority, TaskStatus, SubTask } from '@/types/Task';
 
 type UseTasksOptions = {
   isSignedIn: boolean;
@@ -33,6 +33,19 @@ export function useTasks({ isSignedIn, userId }: UseTasksOptions) {
       end: log.end,
       durationSeconds: typeof log.durationSeconds === 'number' ? log.durationSeconds : 0,
     }));
+  };
+
+  const parseSubtasks = (subtasks: any[] | undefined): SubTask[] => {
+    if (!Array.isArray(subtasks)) {
+      return [];
+    }
+    return subtasks
+      .filter((item) => item && typeof item.id === 'string' && typeof item.title === 'string')
+      .map((item) => ({
+        id: item.id,
+        title: item.title,
+        completed: Boolean(item.completed),
+      }));
   };
 
   useEffect(() => {
@@ -76,6 +89,16 @@ export function useTasks({ isSignedIn, userId }: UseTasksOptions) {
           pomodoroSessions: typeof task.pomodoroSessions === 'number' ? task.pomodoroSessions : 0,
           pomodoroSeconds: typeof task.pomodoroSeconds === 'number' ? task.pomodoroSeconds : 0,
           postponedCount: typeof task.postponedCount === 'number' ? task.postponedCount : 0,
+          subtasks: parseSubtasks(task.subtasks),
+          dependencies: Array.isArray(task.dependencies) ? task.dependencies.filter((id: unknown) => typeof id === 'string') : [],
+          difficultyPoints:
+            typeof task.difficultyPoints === 'number' && !Number.isNaN(task.difficultyPoints)
+              ? task.difficultyPoints
+              : undefined,
+          estimatedHours:
+            typeof task.estimatedHours === 'number' && !Number.isNaN(task.estimatedHours)
+              ? task.estimatedHours
+              : undefined,
         };
       });
       setTasks(parsedTasks);
